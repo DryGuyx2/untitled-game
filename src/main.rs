@@ -74,7 +74,6 @@ fn setup(
 
     commands.spawn((
         Camera2d,
-        // MainCamera,
         Camera {
             order: -1,
             target: RenderTarget::Image(image_handle.clone().into()),
@@ -146,7 +145,6 @@ fn update_mouse_world_pos(
     );
 
     mouse_world_pos.0 = scaled_ndc_world_pos;
-    info!("{:?}", mouse_world_pos.0);
 }
 
 #[derive(Component)]
@@ -176,7 +174,6 @@ fn move_player(
     let speed = 0.1;
     direction = direction.normalize_or_zero();
     player_pos.translation += Vec3::new(direction.x * speed, direction.y * speed, 0.);
-    // info!("{:?}", player_pos.translation.truncate());
 }
 
 fn rotate_to_mouse(
@@ -184,11 +181,6 @@ fn rotate_to_mouse(
     mut transform_q: Query<&mut Transform, With<RotateToMouse>>,
 ) {
     for mut transform in transform_q.iter_mut() {
-        // info!(
-        //     "{:?}:{:?}",
-        //     mouse_world_pos,
-        //     transform.translation.truncate()
-        // );
         let direction = mouse_world_pos.0 - transform.translation.truncate();
         let angle = direction.y.atan2(direction.x);
         transform.rotation = Quat::from_rotation_z(angle);
