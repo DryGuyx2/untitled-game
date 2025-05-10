@@ -1,3 +1,4 @@
+use avian2d::prelude::*;
 use bevy::{
     color::palettes::css::GRAY,
     input::keyboard,
@@ -20,7 +21,7 @@ const HIGH_RES_LAYER: RenderLayers = RenderLayers::layer(1);
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(
+    app.add_plugins((
         DefaultPlugins
             .set(WindowPlugin {
                 primary_window: Some(Window {
@@ -31,12 +32,19 @@ fn main() {
                 ..Default::default()
             })
             .set(ImagePlugin::default_nearest()),
-    );
+        PhysicsPlugins::default(),
+        PhysicsDebugPlugin::default(),
+    ));
     app.add_systems(Startup, setup);
     app.add_systems(Update, fit_canvas);
     app.add_systems(
         Update,
-        (move_player, update_mouse_world_pos, rotate_to_mouse),
+        (
+            move_player,
+            update_mouse_world_pos,
+            rotate_to_mouse,
+            get_player_input,
+        ),
     );
     app.insert_resource(MouseWorldPos(Vec2::new(0., 0.)));
     app.run();
@@ -46,6 +54,7 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut images: ResMut<Assets<Image>>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let canvas_size = Extent3d {
         width: RES_WIDTH,
@@ -91,6 +100,20 @@ fn setup(
         Sprite::from_image(asset_server.load("player.png")),
         Player,
         RotateToMouse,
+        RigidBody::Kinematic,
+        Collider::circle(9.),
+        DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 0.0)),
+        PIXEL_PERFECT_LAYER,
+    ));
+
+    commands.spawn(PlayerInput(Vec2::ZERO));
+
+    commands.spawn((
+        Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
+        Sprite::from_image(asset_server.load("player.png")),
+        RigidBody::Kinematic,
+        Collider::circle(9.),
+        DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
         PIXEL_PERFECT_LAYER,
     ));
 }
@@ -153,27 +176,37 @@ struct RotateToMouse;
 #[derive(Component)]
 struct Player;
 
-fn move_player(
+#[derive(Component)]
+struct PlayerInput(Vec2);
+
+fn get_player_input(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_pos: Single<&mut Transform, With<Player>>,
+    mut player_input: Single<&mut PlayerInput>,
 ) {
-    let mut direction = Vec2::ZERO;
+    player_input.0 = Vec2::ZERO;
     if keyboard_input.pressed(KeyCode::KeyA) {
-        direction.x -= 1.;
+        player_input.0.x -= 1.;
     };
     if keyboard_input.pressed(KeyCode::KeyD) {
-        direction.x += 1.;
+        player_input.0.x += 1.;
     };
     if keyboard_input.pressed(KeyCode::KeyW) {
-        direction.y += 1.;
+        player_input.0.y += 1.;
     };
     if keyboard_input.pressed(KeyCode::KeyS) {
-        direction.y -= 1.;
+        player_input.0.y -= 1.;
     };
+}
+
+fn move_player(
+    mut player_pos: Single<&mut Transform, With<Player>>,
+    player_input: Single<&PlayerInput>,
+) {
+    let mut direction = Vec2::ZERO;
 
     let speed = 0.1;
     direction = direction.normalize_or_zero();
-    player_pos.translation += Vec3::new(direction.x * speed, direction.y * speed, 0.);
+    player_pos.translation += Vec3::new(player_input.0.x * speed, player_input.0.y * speed, 0.);
 }
 
 fn rotate_to_mouse(
