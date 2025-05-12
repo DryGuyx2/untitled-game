@@ -1,7 +1,6 @@
 use avian2d::prelude::*;
 use bevy::{
     color::palettes::css::GRAY,
-    input::keyboard,
     prelude::*,
     render::{
         camera::RenderTarget,
@@ -12,8 +11,6 @@ use bevy::{
     },
     window::{PrimaryWindow, WindowResized},
 };
-use bevy_tnua::{TnuaGravity, prelude::*};
-use bevy_tnua_avian2d::{TnuaAvian2dPlugin, TnuaAvian2dSensorShape};
 
 const RES_HEIGHT: u32 = 80;
 const RES_WIDTH: u32 = 128;
@@ -36,8 +33,6 @@ fn main() {
             .set(ImagePlugin::default_nearest()),
         PhysicsPlugins::default(),
         PhysicsDebugPlugin::default(),
-        TnuaAvian2dPlugin::new(FixedUpdate),
-        TnuaControllerPlugin::new(FixedUpdate),
     ));
     app.add_systems(Startup, setup);
     app.add_systems(Update, fit_canvas);
@@ -58,7 +53,6 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut images: ResMut<Assets<Image>>,
-    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let canvas_size = Extent3d {
         width: RES_WIDTH,
@@ -108,7 +102,9 @@ fn setup(
         Collider::circle(9.),
         DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 0.0)),
         PIXEL_PERFECT_LAYER,
-        TnuaController::default(),
+        LinearVelocity::ZERO,
+        AngularVelocity::ZERO,
+        MaxLinearSpeed(400.),
     ));
 
     commands.spawn(PlayerInput(Vec2::ZERO));
@@ -204,21 +200,16 @@ fn get_player_input(
 }
 
 fn move_player(
-    mut player_pos: Single<&mut Transform, With<Player>>,
     player_input: Single<&PlayerInput>,
-    mut player_controller: Single<&mut TnuaController, With<Player>>,
+    player_velocity: Single<&mut LinearVelocity, With<Player>>,
 ) {
-    let speed = 0.1;
-    let mut direction = Vec3::new(player_input.0.x * speed, player_input.0.y * speed, 0.);
+    let speed = 100.;
+    let mut direction = Vec2::new(player_input.0.x, player_input.0.y);
+    direction = direction.normalize_or_zero() * speed;
 
-    direction = direction.normalize_or_zero();
-    // player_pos.translation += Vec3::new(player_input.0.x * speed, player_input.0.y * speed, 0.);
+    let mut velocity = player_velocity.into_inner();
 
-    player_controller.basis(TnuaBuiltinWalk {
-        desired_velocity: direction,
-        float_height: 1.5,
-        ..Default::default()
-    })
+    velocity.0 = direction;
 }
 
 fn rotate_to_mouse(
