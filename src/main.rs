@@ -38,7 +38,12 @@ fn main() {
     app.add_systems(Update, fit_canvas);
     app.add_systems(
         Update,
-        (move_player, update_mouse_world_pos, rotate_to_mouse),
+        (
+            move_player,
+            update_mouse_world_pos,
+            rotate_to_mouse,
+            spawn_flares,
+        ),
     );
     app.insert_resource(MouseWorldPos(Vec2::new(0., 0.)));
     app.run();
@@ -193,7 +198,6 @@ fn move_player(
     direction = direction.normalize_or_zero() * speed;
 
     let mut velocity = player_velocity.into_inner();
-
     velocity.0 = direction;
 }
 
@@ -205,5 +209,28 @@ fn rotate_to_mouse(
         let direction = mouse_world_pos.0 - transform.translation.truncate();
         let angle = direction.y.atan2(direction.x);
         transform.rotation = Quat::from_rotation_z(angle);
+    }
+}
+
+#[derive(Component)]
+struct Flare;
+
+fn spawn_flares(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
+    player_transform: Single<&Transform, With<Player>>,
+) {
+    if keyboard_input.just_pressed(KeyCode::KeyF) {
+        commands.spawn((
+            Flare,
+            Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
+            Sprite::from_image(asset_server.load("flare.png")),
+            //RigidBody::Dynamic,
+            //Collider::circle(9.),
+            //DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
+            PIXEL_PERFECT_LAYER,
+        ));
+        info!("Flare spawned");
     }
 }
