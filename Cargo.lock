@@ -342,6 +342,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-tnua"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fed533302dfcef51b63d60c2731e0c64bf835ca3e287da686b411869afddee0e"
+dependencies = [
+ "bevy",
+ "bevy-tnua-physics-integration-layer",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "bevy-tnua-avian2d"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4453,6 +4464,7 @@ version = "0.1.0"
 dependencies = [
  "avian2d",
  "bevy",
+ "bevy-tnua",
  "bevy-tnua-avian2d",
 ]
 

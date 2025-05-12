@@ -12,6 +12,8 @@ use bevy::{
     },
     window::{PrimaryWindow, WindowResized},
 };
+use bevy_tnua::{TnuaGravity, prelude::*};
+use bevy_tnua_avian2d::{TnuaAvian2dPlugin, TnuaAvian2dSensorShape};
 
 const RES_HEIGHT: u32 = 80;
 const RES_WIDTH: u32 = 128;
@@ -34,6 +36,8 @@ fn main() {
             .set(ImagePlugin::default_nearest()),
         PhysicsPlugins::default(),
         PhysicsDebugPlugin::default(),
+        TnuaAvian2dPlugin::new(FixedUpdate),
+        TnuaControllerPlugin::new(FixedUpdate),
     ));
     app.add_systems(Startup, setup);
     app.add_systems(Update, fit_canvas);
@@ -100,10 +104,11 @@ fn setup(
         Sprite::from_image(asset_server.load("player.png")),
         Player,
         RotateToMouse,
-        RigidBody::Kinematic,
+        RigidBody::Dynamic,
         Collider::circle(9.),
         DebugRender::default().with_collider_color(Color::srgb(1.0, 0.0, 0.0)),
         PIXEL_PERFECT_LAYER,
+        TnuaController::default(),
     ));
 
     commands.spawn(PlayerInput(Vec2::ZERO));
@@ -201,12 +206,19 @@ fn get_player_input(
 fn move_player(
     mut player_pos: Single<&mut Transform, With<Player>>,
     player_input: Single<&PlayerInput>,
+    mut player_controller: Single<&mut TnuaController, With<Player>>,
 ) {
-    let mut direction = Vec2::ZERO;
-
     let speed = 0.1;
+    let mut direction = Vec3::new(player_input.0.x * speed, player_input.0.y * speed, 0.);
+
     direction = direction.normalize_or_zero();
-    player_pos.translation += Vec3::new(player_input.0.x * speed, player_input.0.y * speed, 0.);
+    // player_pos.translation += Vec3::new(player_input.0.x * speed, player_input.0.y * speed, 0.);
+
+    player_controller.basis(TnuaBuiltinWalk {
+        desired_velocity: direction,
+        float_height: 1.5,
+        ..Default::default()
+    })
 }
 
 fn rotate_to_mouse(
