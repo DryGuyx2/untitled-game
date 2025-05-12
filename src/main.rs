@@ -38,12 +38,7 @@ fn main() {
     app.add_systems(Update, fit_canvas);
     app.add_systems(
         Update,
-        (
-            move_player,
-            update_mouse_world_pos,
-            rotate_to_mouse,
-            get_player_input,
-        ),
+        (move_player, update_mouse_world_pos, rotate_to_mouse),
     );
     app.insert_resource(MouseWorldPos(Vec2::new(0., 0.)));
     app.run();
@@ -106,8 +101,6 @@ fn setup(
         AngularVelocity::ZERO,
         MaxLinearSpeed(400.),
     ));
-
-    commands.spawn(PlayerInput(Vec2::ZERO));
 
     commands.spawn((
         Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
@@ -177,34 +170,26 @@ struct RotateToMouse;
 #[derive(Component)]
 struct Player;
 
-#[derive(Component)]
-struct PlayerInput(Vec2);
-
-fn get_player_input(
-    keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_input: Single<&mut PlayerInput>,
-) {
-    player_input.0 = Vec2::ZERO;
-    if keyboard_input.pressed(KeyCode::KeyA) {
-        player_input.0.x -= 1.;
-    };
-    if keyboard_input.pressed(KeyCode::KeyD) {
-        player_input.0.x += 1.;
-    };
-    if keyboard_input.pressed(KeyCode::KeyW) {
-        player_input.0.y += 1.;
-    };
-    if keyboard_input.pressed(KeyCode::KeyS) {
-        player_input.0.y -= 1.;
-    };
-}
-
 fn move_player(
-    player_input: Single<&PlayerInput>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     player_velocity: Single<&mut LinearVelocity, With<Player>>,
 ) {
+    let mut direction = Vec2::ZERO;
+    if keyboard_input.pressed(KeyCode::KeyA) {
+        direction.x -= 1.;
+    };
+    if keyboard_input.pressed(KeyCode::KeyD) {
+        direction.x += 1.;
+    };
+    if keyboard_input.pressed(KeyCode::KeyW) {
+        direction.y += 1.;
+    };
+    if keyboard_input.pressed(KeyCode::KeyS) {
+        direction.y -= 1.;
+    };
+
     let speed = 100.;
-    let mut direction = Vec2::new(player_input.0.x, player_input.0.y);
+
     direction = direction.normalize_or_zero() * speed;
 
     let mut velocity = player_velocity.into_inner();
