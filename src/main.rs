@@ -46,6 +46,7 @@ fn main() {
         ),
     );
     app.insert_resource(MouseWorldPos(Vec2::new(0., 0.)));
+    app.insert_resource(Gravity::ZERO);
     app.run();
 }
 
@@ -107,14 +108,14 @@ fn setup(
         MaxLinearSpeed(400.),
     ));
 
-    commands.spawn((
-        Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
-        Sprite::from_image(asset_server.load("player.png")),
-        RigidBody::Kinematic,
-        Collider::circle(9.),
-        DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
-        PIXEL_PERFECT_LAYER,
-    ));
+    // commands.spawn((
+    //     Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
+    //     Sprite::from_image(asset_server.load("player.png")),
+    //     RigidBody::Kinematic,
+    //     Collider::circle(9.),
+    //     DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
+    //     PIXEL_PERFECT_LAYER,
+    // ));
 }
 
 #[derive(Component)]
@@ -226,10 +227,12 @@ fn spawn_flares(
             Flare,
             Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
             Sprite::from_image(asset_server.load("flare.png")),
-            //RigidBody::Dynamic,
-            //Collider::circle(9.),
-            //DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
+            RigidBody::Dynamic,
+            Collider::circle(9.),
+            DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
             PIXEL_PERFECT_LAYER,
+            LinearVelocity::ZERO,
+            AngularVelocity::ZERO,
         ));
         info!("Flare spawned");
     }
