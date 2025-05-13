@@ -225,15 +225,20 @@ fn spawn_flares(
     if keyboard_input.just_pressed(KeyCode::KeyF) {
         commands.spawn((
             Flare,
-            Transform::from_xyz(30., 0., 0.).with_scale(Vec3::splat(1.)),
+            Transform::from_translation(player_transform.translation).with_scale(Vec3::splat(1.)),
             Sprite::from_image(asset_server.load("flare.png")),
             RigidBody::Dynamic,
-            Collider::circle(9.),
+            Collider::circle(5.),
             DebugRender::default().with_collider_color(Color::srgb(1.0, 1.0, 0.0)),
             PIXEL_PERFECT_LAYER,
-            LinearVelocity::ZERO,
-            AngularVelocity::ZERO,
+            LinearVelocity(
+                ((player_transform.rotation
+                    * Quat::from_rotation_z(3. * std::f32::consts::PI / 2.))
+                    * Vec3::Y)
+                    .xy()
+                    * 100.,
+            ),
+            AngularVelocity(-20.),
         ));
-        info!("Flare spawned");
     }
 }
